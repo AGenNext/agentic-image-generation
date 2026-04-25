@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  image-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: image-agent
+    ports:
+      - "8003:8003"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - STABILITY_API_KEY=${STABILITY_API_KEY:-}
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN:-}
+    volumes:
+      - ./output:/app/output
+      - ./cache:/app/cache
+    restart: unless-stopped
