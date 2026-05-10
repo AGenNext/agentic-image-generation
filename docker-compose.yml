@@ -1,19 +1,62 @@
-version: '3.8'
+version: '3.9'
 
 services:
   image-agent:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: image-agent
+    build: .
     ports:
-      - "8003:8003"
+      - "8900:8900"
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - STABILITY_API_KEY=${STABILITY_API_KEY:-}
-      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN:-}
+      NODE_ENV: development
+      IMAGE_AGENT_API_KEYS: dev-key
+      STORAGE_ROOT: /app/data/images
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      REDIS_URL: redis://redis:6379
+      IMGPROXY_URL: http://imgproxy:8080
+      IMGPROXY_SIGNATURE_KEY: your-secret-key
+      IMGPROXY_SIGNATURE_SALT: your-secret-salt
     volumes:
+      - ./data:/app/data
       - ./output:/app/output
       - ./cache:/app/cache
+    depends_on:
+      - minio
+      - redis
+      - imgproxy
     restart: unless-stopped
+
+  imgproxy:
+    image: darthsim/imgproxy:latest
+    ports:
+      - "8080:8080"
+    environment:
+      IMGPROXY_SIGNATURE_KEY: "your-secret-key"
+      IMGPROXY_SIGNATURE_SALT: "your-secret-salt"
+      IMGPROXY_USE_S3: "true"
+      IMGPROXY_S3_ENDPOINT: "http://minio:9000"
+      IMGPROXY_S3_REGION: "ap-south-1"
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+    depends_on:
+      - minio
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /minio_data --console-address ":9001"
+    volumes:
+      - minio-data:/minio_data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  minio-data:

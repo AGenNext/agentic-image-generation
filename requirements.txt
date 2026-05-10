@@ -2,3 +2,8 @@ fastapi
 uvicorn
 gradio
 requests
+Pillow
+python-multipart
+prometheus-client
+httpx
+pydantic
