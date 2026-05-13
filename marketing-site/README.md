@@ -14,4 +14,6 @@ npm run dev
 npm run build
 ```
 
-The source code for the landing page is available in the ChatGPT canvas for this conversation.
+## CI
+
+GitHub Actions automatically builds the site on every push and pull request.
